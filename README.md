@@ -164,6 +164,52 @@ Update a specific product (if user has access).
 #### DELETE `/api/products/{id}/`
 Delete a specific product (if user has access).
 
+### Filtering, Search, and Ordering
+
+#### Product Filtering, Search, and Ordering
+
+**Filtering:**
+- `category` - Filter by category ID: `?category=1`
+- `is_active` - Filter by active status: `?is_active=true`
+- `min_price` - Filter by minimum price: `?min_price=10.00`
+- `max_price` - Filter by maximum price: `?max_price=100.00`
+- `brand` - Filter by brand ID (admin only): `?brand=2`
+
+**Search:**
+- Search in name and SKU: `?search=laptop`
+
+**Ordering:**
+- Order by name: `?ordering=name` (ascending) or `?ordering=-name` (descending)
+- Order by price: `?ordering=price` or `?ordering=-price`
+- Order by creation date: `?ordering=created_at` or `?ordering=-created_at` (default)
+- Order by stock: `?ordering=stock` or `?ordering=-stock`
+
+**Combined examples:**
+```
+GET /api/products/?category=1&is_active=true&min_price=50&max_price=200&search=gaming&ordering=-price
+GET /api/products/?is_active=true&ordering=name
+GET /api/products/?brand=2&min_price=100&ordering=-created_at  # Admin only
+```
+
+#### Category Filtering, Search, and Ordering
+
+**Filtering:**
+- `is_active` - Filter by active status: `?is_active=true`
+- `name` - Filter by name (case-insensitive contains): `?name=electronics`
+
+**Search:**
+- Search in name: `?search=gaming`
+
+**Ordering:**
+- Order by name: `?ordering=name` (default, ascending) or `?ordering=-name` (descending)
+- Order by creation date: `?ordering=created_at` or `?ordering=-created_at`
+
+**Combined examples:**
+```
+GET /api/categories/?is_active=true&search=electronics&ordering=name
+GET /api/categories/?name=tech&ordering=-created_at
+```
+
 ## cURL Examples
 
 ### Login

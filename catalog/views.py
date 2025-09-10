@@ -1,9 +1,11 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
 from core.constants import ROLE_ADMIN
 from .models import Category, Product
 from .serializers import CategorySerializer, ProductSerializer
 from .permissions import IsAdminOrOwnBrand
+from .filters import CategoryFilter, ProductFilter
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -14,6 +16,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
     """
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated, IsAdminOrOwnBrand]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = CategoryFilter
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']  # Default ordering
 
     def get_queryset(self):
         """
@@ -41,6 +48,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     """
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated, IsAdminOrOwnBrand]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = ProductFilter
+    search_fields = ['name', 'sku']
+    ordering_fields = ['name', 'price', 'created_at', 'stock']
+    ordering = ['-created_at']  # Default ordering (most recent first)
 
     def get_queryset(self):
         """
@@ -58,3 +70,11 @@ class ProductViewSet(viewsets.ModelViewSet):
             else:
                 # If brand manager has no brand, return empty queryset
                 return Product.objects.none()
+    
+    def get_filterset_kwargs(self):
+        """
+        Pass request to filterset for brand-aware filtering.
+        """
+        kwargs = super().get_filterset_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
