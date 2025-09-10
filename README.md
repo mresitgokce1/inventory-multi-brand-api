@@ -210,6 +210,105 @@ GET /api/categories/?is_active=true&search=electronics&ordering=name
 GET /api/categories/?name=tech&ordering=-created_at
 ```
 
+## Public API Endpoints
+
+### Public Products Endpoint
+
+#### GET `/api/public/products/`
+Browse active products without authentication. Public read-only access to product catalog.
+
+**Features:**
+- **No authentication required** - AllowAny permission
+- **Only active products** - Inactive products are excluded
+- **Public filtering** - Limited filtering options for public use
+- **Search** - Search by product name and SKU
+- **Ordering** - Sort results by price or creation date
+
+**Public filters:**
+- `brand` - Filter by brand slug: `?brand=techcorp`
+- `category` - Filter by category ID or slug: `?category=1` or `?category=laptops`
+- `min_price` - Filter by minimum price: `?min_price=50.00`
+- `max_price` - Filter by maximum price: `?max_price=500.00`
+
+**Search:**
+- Search in product name and SKU: `?search=gaming`
+
+**Ordering:**
+- Order by price: `?ordering=price` (ascending) or `?ordering=-price` (descending)
+- Order by creation date: `?ordering=created_at` or `?ordering=-created_at` (default)
+
+**Response fields:**
+- `id` - Product ID
+- `name` - Product name
+- `slug` - Product slug
+- `price` - Product price
+- `image_small` - Small product image URL (if available)
+- `brand` - Brand information (`id`, `name`, `slug`)
+- `category` - Category information (`id`, `name`, `slug`)
+
+**Example Response:**
+```json
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "name": "Gaming Laptop",
+      "slug": "gaming-laptop",
+      "price": "1299.99",
+      "image_small": null,
+      "brand": {
+        "id": 1,
+        "name": "TechCorp",
+        "slug": "techcorp"
+      },
+      "category": {
+        "id": 1,
+        "name": "Laptops",
+        "slug": "laptops"
+      }
+    }
+  ]
+}
+```
+
+**Public API Examples:**
+
+```bash
+# Get all active products
+curl http://localhost:8000/api/public/products/
+
+# Filter by brand slug
+curl "http://localhost:8000/api/public/products/?brand=techcorp"
+
+# Filter by category ID
+curl "http://localhost:8000/api/public/products/?category=1"
+
+# Filter by category slug
+curl "http://localhost:8000/api/public/products/?category=laptops"
+
+# Filter by price range
+curl "http://localhost:8000/api/public/products/?min_price=100&max_price=1000"
+
+# Search products
+curl "http://localhost:8000/api/public/products/?search=gaming"
+
+# Order by price (ascending)
+curl "http://localhost:8000/api/public/products/?ordering=price"
+
+# Order by price (descending)
+curl "http://localhost:8000/api/public/products/?ordering=-price"
+
+# Order by creation date (newest first, default)
+curl "http://localhost:8000/api/public/products/?ordering=-created_at"
+
+# Combined filters
+curl "http://localhost:8000/api/public/products/?brand=techcorp&min_price=500&ordering=-price"
+curl "http://localhost:8000/api/public/products/?category=laptops&search=gaming&max_price=2000"
+```
+
 ## cURL Examples
 
 ### Login
@@ -364,7 +463,7 @@ The catalog functionality is being implemented in phases:
 
 - **Phase 1: Models foundation** - Core Category and Product models with brand-scoped uniqueness (✓ Complete)
 - **Phase 2: CRUD serializers & viewsets** - Brand scoping permissions and API endpoints (✓ Complete)
-- **Phase 3: Filtering, search, ordering** - Advanced query capabilities
-- **Phase 4: Public read-only products endpoint** - Public API for product browsing
+- **Phase 3: Filtering, search, ordering** - Advanced query capabilities (✓ Complete)
+- **Phase 4: Public read-only products endpoint** - Public API for product browsing (✓ Complete)
 - **Phase 5: Image processing + small variant** - Automatic image resizing and optimization
 - **Phase 6: Tests + OpenAPI + doc polish** - Comprehensive testing, API documentation, and final polish
