@@ -3,6 +3,7 @@ Serializers for Category and Product models.
 """
 from rest_framework import serializers
 from core.constants import ROLE_ADMIN
+from accounts.models import Brand
 from .models import Category, Product
 
 
@@ -17,16 +18,10 @@ class CategorySerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'is_active', 
             'brand', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Make brand read-only for non-admin users
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            if request.user.role != ROLE_ADMIN:
-                self.fields['brand'].read_only = True
+        read_only_fields = ['id', 'slug', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'brand': {'required': False, 'allow_null': True}
+        }
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -34,6 +29,11 @@ class ProductSerializer(serializers.ModelSerializer):
     Serializer for Product model.
     """
     category_details = CategorySerializer(source='category', read_only=True)
+    brand = serializers.PrimaryKeyRelatedField(
+        queryset=Brand.objects.all(),
+        required=False,
+        allow_null=True
+    )
     
     class Meta:
         model = Product
@@ -42,16 +42,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'is_active', 'category', 'category_details', 'brand', 'image', 
             'image_small', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'image_small', 'created_at', 'updated_at']
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Make brand read-only for non-admin users
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            if request.user.role != ROLE_ADMIN:
-                self.fields['brand'].read_only = True
+        read_only_fields = ['id', 'slug', 'image_small', 'created_at', 'updated_at']
     
     def validate_price(self, value):
         """
