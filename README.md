@@ -164,6 +164,26 @@ curl http://localhost:8000/api/schema/
 - `password`: Hashed password
 - Standard Django user fields: `is_active`, `is_staff`, `date_joined`, etc.
 
+### Category
+- `brand`: Foreign key to Brand (CASCADE on brand deletion)
+- `name`: Category name (unique per brand)
+- `slug`: Auto-generated URL-friendly slug (unique per brand, with collision handling)
+- `is_active`: Boolean flag for active categories
+- `created_at`, `updated_at`: Timestamp fields
+
+### Product
+- `brand`: Foreign key to Brand (CASCADE on brand deletion)
+- `category`: Foreign key to Category (optional, SET_NULL on category deletion)
+- `name`: Product name
+- `slug`: Auto-generated URL-friendly slug (unique per brand, with collision handling)
+- `sku`: Stock Keeping Unit (unique per brand)
+- `description`: Product description (optional)
+- `price`: Product price (Decimal with 10 digits, 2 decimal places)
+- `stock`: Inventory count (default: 0)
+- `is_active`: Boolean flag for active products
+- `image`, `image_small`: Optional image fields
+- `created_at`, `updated_at`: Timestamp fields
+
 ## Roles
 
 - **ADMIN**: Full system access
@@ -250,3 +270,14 @@ For production deployment, ensure:
 3. Configure proper ALLOWED_HOSTS
 4. Set up HTTPS for secure cookies
 5. Configure database for production use
+
+## Catalog Module Rollout
+
+The catalog functionality is being implemented in phases:
+
+- **Phase 1: Models foundation** - Core Category and Product models with brand-scoped uniqueness (✓ Complete)
+- **Phase 2: CRUD serializers & viewsets** - Brand scoping permissions and API endpoints  
+- **Phase 3: Filtering, search, ordering** - Advanced query capabilities
+- **Phase 4: Public read-only products endpoint** - Public API for product browsing
+- **Phase 5: Image processing + small variant** - Automatic image resizing and optimization
+- **Phase 6: Tests + OpenAPI + doc polish** - Comprehensive testing, API documentation, and final polish
