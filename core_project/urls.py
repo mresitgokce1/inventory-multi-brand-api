@@ -11,6 +11,7 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/auth/', include('accounts.urls')),
+    path('api/', include('catalog.urls')),
 ]
 
 # Serve media files in development

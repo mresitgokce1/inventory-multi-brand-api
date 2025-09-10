@@ -123,6 +123,47 @@ Logout and clear refresh token cookie.
 #### GET `/api/schema/`
 Returns OpenAPI 3.0 schema in YAML format.
 
+### Catalog Endpoints
+
+#### GET `/api/categories/`
+List categories accessible to the authenticated user.
+- **Admin users**: See all categories across all brands
+- **Brand managers**: See only categories from their own brand
+
+#### POST `/api/categories/`
+Create a new category.
+- **Admin users**: Can specify any brand
+- **Brand managers**: Category automatically assigned to their brand
+
+#### GET `/api/categories/{id}/`
+Retrieve a specific category (if user has access).
+
+#### PUT `/api/categories/{id}/`
+Update a specific category (if user has access).
+
+#### DELETE `/api/categories/{id}/`
+Delete a specific category (if user has access).
+
+#### GET `/api/products/`
+List products accessible to the authenticated user.
+- **Admin users**: See all products across all brands
+- **Brand managers**: See only products from their own brand
+
+#### POST `/api/products/`
+Create a new product.
+- **Admin users**: Can specify any brand
+- **Brand managers**: Product automatically assigned to their brand
+- **Validations**: price >= 0, stock >= 0
+
+#### GET `/api/products/{id}/`
+Retrieve a specific product (if user has access).
+
+#### PUT `/api/products/{id}/`
+Update a specific product (if user has access).
+
+#### DELETE `/api/products/{id}/`
+Delete a specific product (if user has access).
+
 ## cURL Examples
 
 ### Login
@@ -276,7 +317,7 @@ For production deployment, ensure:
 The catalog functionality is being implemented in phases:
 
 - **Phase 1: Models foundation** - Core Category and Product models with brand-scoped uniqueness (✓ Complete)
-- **Phase 2: CRUD serializers & viewsets** - Brand scoping permissions and API endpoints  
+- **Phase 2: CRUD serializers & viewsets** - Brand scoping permissions and API endpoints (✓ Complete)
 - **Phase 3: Filtering, search, ordering** - Advanced query capabilities
 - **Phase 4: Public read-only products endpoint** - Public API for product browsing
 - **Phase 5: Image processing + small variant** - Automatic image resizing and optimization
