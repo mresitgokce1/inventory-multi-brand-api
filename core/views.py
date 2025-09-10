@@ -155,11 +155,19 @@ class ProductViewSet(viewsets.ModelViewSet):
             # Brand Manager: auto-set their brand
             serializer.save(brand=self.request.user.brand)
         else:
-            # Admin: must provide brand explicitly
-            if 'brand' not in serializer.validated_data or not serializer.validated_data['brand']:
+            # Admin: must provide brand explicitly via POST data
+            brand_id = self.request.data.get('brand')
+            if not brand_id:
                 from rest_framework.exceptions import ValidationError
                 raise ValidationError({'brand': 'This field is required for admin users.'})
-            serializer.save()
+            
+            try:
+                from accounts.models import Brand
+                brand = Brand.objects.get(id=brand_id)
+                serializer.save(brand=brand)
+            except Brand.DoesNotExist:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({'brand': 'Invalid brand ID.'})
 
 
 @extend_schema(

@@ -29,11 +29,7 @@ class ProductSerializer(serializers.ModelSerializer):
     Serializer for Product model.
     """
     category_details = CategorySerializer(source='category', read_only=True)
-    brand = serializers.PrimaryKeyRelatedField(
-        queryset=Brand.objects.all(),
-        required=False,
-        allow_null=True
-    )
+    brand = serializers.PrimaryKeyRelatedField(read_only=True)
     
     class Meta:
         model = Product
@@ -42,7 +38,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'is_active', 'category', 'category_details', 'brand', 'image', 
             'image_small', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'slug', 'image_small', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'slug', 'brand', 'image_small', 'created_at', 'updated_at']
     
     def validate_price(self, value):
         """

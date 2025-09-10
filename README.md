@@ -18,6 +18,10 @@ This project is a Django REST Framework-based backend API for multi-brand invent
 - **API Documentation**: OpenAPI/Swagger schema endpoint
 - **Modular Settings**: Separate configurations for development and production
 - **Comprehensive Tests**: Full test coverage for authentication and models
+- **Category & Product Management**: Full CRUD operations with brand isolation
+- **Advanced Filtering**: Search, price range, category, and status filtering
+- **Public API Endpoint**: Read-only access to active products
+- **Image Processing**: Automatic image optimization and resizing
 
 ## Kurulum (Installation)
 
@@ -69,6 +73,46 @@ python manage.py runserver
 The API will be available at `http://localhost:8000/`
 
 ## API Endpoints
+
+### Category & Product Management Endpoints
+
+#### GET/POST/PUT/DELETE `/api/categories/`
+Manage product categories with brand-scoped access.
+
+**Permissions:**
+- Admins can access all categories
+- Brand Managers can only access their brand's categories
+
+**Filtering & Search:**
+- `is_active=true/false` - Filter by active status
+- `search=electronics` - Search by name
+
+#### GET/POST/PUT/DELETE `/api/products/`
+Manage products with full CRUD operations.
+
+**Permissions:**
+- Admins can access all products, must specify `brand` on creation
+- Brand Managers can only access their brand's products, `brand` auto-assigned
+
+**Filtering & Search:**
+- `brand=1` - Filter by brand ID (admin only)
+- `category=1` - Filter by category ID
+- `is_active=true/false` - Filter by active status
+- `min_price=10.00` - Minimum price filter
+- `max_price=100.00` - Maximum price filter
+- `search=laptop` - Search by name or SKU
+- `ordering=price,-price,name,-name,created_at,-created_at,stock,-stock`
+
+#### GET `/api/public/products/`
+Public read-only endpoint for active products (no authentication required).
+
+**Public Filtering & Search:**
+- `brand=brand-slug` - Filter by brand slug
+- `category=1` or `category=category-slug` - Filter by category ID or slug
+- `min_price=10.00` - Minimum price filter
+- `max_price=100.00` - Maximum price filter
+- `search=laptop` - Search by name or SKU
+- `ordering=price,-price,created_at,-created_at` - Sort options
 
 ### Authentication Endpoints
 
@@ -150,6 +194,64 @@ curl -X POST http://localhost:8000/api/auth/logout/ \
 curl http://localhost:8000/api/schema/
 ```
 
+## Product & Category API Examples
+
+### Create a Category (Brand Manager)
+```bash
+curl -X POST http://localhost:8000/api/categories/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{"name": "Electronics", "is_active": true}'
+```
+
+### Create a Product (Admin)
+```bash
+curl -X POST http://localhost:8000/api/products/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_ACCESS_TOKEN" \
+  -d '{
+    "name": "Smartphone",
+    "sku": "PHONE001",
+    "price": "599.99",
+    "stock": 10,
+    "brand": 1,
+    "category": 1,
+    "is_active": true
+  }'
+```
+
+### Filter Products by Price Range
+```bash
+curl "http://localhost:8000/api/products/?min_price=100&max_price=1000&ordering=-price" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### Search Products
+```bash
+curl "http://localhost:8000/api/products/?search=laptop" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### Public Products (No Authentication)
+```bash
+# Get all active products
+curl http://localhost:8000/api/public/products/
+
+# Filter by brand
+curl "http://localhost:8000/api/public/products/?brand=apple"
+
+# Search and filter
+curl "http://localhost:8000/api/public/products/?search=phone&min_price=200&max_price=800"
+```
+
+### Upload Product Image
+```bash
+curl -X PUT http://localhost:8000/api/products/1/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "image=@product-image.jpg" \
+  -F "name=Updated Product Name"
+```
+
 ## Models
 
 ### Brand
@@ -164,10 +266,44 @@ curl http://localhost:8000/api/schema/
 - `password`: Hashed password
 - Standard Django user fields: `is_active`, `is_staff`, `date_joined`, etc.
 
+### Category
+- `brand`: Foreign key to Brand (CASCADE)
+- `name`: Category name (unique per brand)
+- `slug`: Auto-generated slug (unique per brand)
+- `is_active`: Boolean flag for active status
+- `created_at` / `updated_at`: Timestamps
+
+### Product
+- `brand`: Foreign key to Brand (CASCADE)
+- `category`: Foreign key to Category (SET_NULL, optional)
+- `name`: Product name
+- `slug`: Auto-generated slug (unique per brand)
+- `sku`: Stock Keeping Unit (unique per brand)
+- `description`: Product description (optional)
+- `price`: Decimal price with 2 decimal places
+- `stock`: Integer stock quantity
+- `is_active`: Boolean flag for active status
+- `image`: Original product image
+- `image_small`: Auto-generated small image (400px width)
+- `created_at` / `updated_at`: Timestamps
+
 ## Roles
 
 - **ADMIN**: Full system access
 - **BRAND_MANAGER**: Brand-specific access (associated with a specific brand)
+
+## Image Processing
+
+The system automatically processes uploaded product images:
+
+- **Original Image**: Resized to maximum 1920px width while maintaining aspect ratio
+- **Small Image**: Generated at 400px width for thumbnails/previews
+- **Format**: All images converted to JPEG with 80% quality and progressive encoding
+- **EXIF Removal**: Metadata automatically stripped for privacy
+- **Naming**: Images named using product slug + hash for uniqueness
+- **Storage**: Original images in `products/original/`, small images in `products/small/`
+
+Images are processed automatically when a product is created or updated with an image file.
 
 ## Settings
 

@@ -131,13 +131,13 @@ class TestPermissionsAndBrandScoping:
             'name': 'New Product',
             'sku': 'NEW001',
             'price': '15.00',
-            'category': self.category1.id,
-            # Note: not providing brand - should be auto-set
+            # No category, no brand - just basic product
         }
         
         response = self.client.post('/api/products/', data)
         
         assert response.status_code == status.HTTP_201_CREATED
+        # Should be auto-set to brand1
         assert response.data['brand'] == self.brand1.id
         
         # Verify in database
@@ -150,17 +150,38 @@ class TestPermissionsAndBrandScoping:
         
         data = {
             'name': 'New Product',
-            'sku': 'NEW001',
+            'sku': 'NEW001', 
             'price': '15.00',
-            'brand': self.brand2.id,  # Trying to set different brand
             'category': self.category1.id,
+            # Note: Brand field is now read-only and ignored in input
         }
         
         response = self.client.post('/api/products/', data)
         
-        # Should succeed but brand should be auto-set to brand manager's brand
+        # Should succeed and brand should be auto-set to brand manager's brand
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['brand'] == self.brand1.id  # Should be auto-set
+
+    def test_brand_manager_create_without_brand_field(self):
+        """Test that brand manager can create product without providing brand."""
+        self.client.force_authenticate(user=self.brand1_manager)
+        
+        data = {
+            'name': 'New Product No Brand',
+            'sku': 'NB001', 
+            'price': '25.00',
+            'category': self.category1.id,
+            # Note: not providing brand field at all
+        }
+        
+        response = self.client.post('/api/products/', data)
+        
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data['brand'] == self.brand1.id
+        
+        # Verify in database
+        product = Product.objects.get(id=response.data['id'])
+        assert product.brand == self.brand1
 
     def test_admin_must_provide_brand_on_create(self):
         """Test that admin must explicitly provide brand when creating."""
