@@ -8,3 +8,4 @@ Pillow==11.3.0
 pytest==8.4.2
 pytest-django==4.11.1
 python-decouple==3.8
+django-filter==24.3
