@@ -199,3 +199,37 @@ class ProductSerializer(serializers.ModelSerializer):
         if instance.category:
             data['category_name'] = instance.category.name
         return data
+
+
+class PublicProductSerializer(serializers.ModelSerializer):
+    """
+    Public serializer for Product model with limited fields for public access.
+    Only returns active products with nested brand and category information.
+    """
+    brand = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'slug', 'price', 'image_small', 'brand', 'category']
+        read_only_fields = fields  # All fields are read-only for public access
+    
+    def get_brand(self, obj):
+        """Return brand information with id, name, and slug."""
+        if obj.brand:
+            return {
+                'id': obj.brand.id,
+                'name': obj.brand.name,
+                'slug': obj.brand.slug
+            }
+        return None
+    
+    def get_category(self, obj):
+        """Return category information with id, name, and slug."""
+        if obj.category:
+            return {
+                'id': obj.category.id,
+                'name': obj.category.name,
+                'slug': obj.category.slug
+            }
+        return None

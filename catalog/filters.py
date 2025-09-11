@@ -72,3 +72,36 @@ class ProductFilter(filters.FilterSet):
             return queryset.filter(brand=value)
         
         return queryset
+
+
+class PublicProductFilter(filters.FilterSet):
+    """
+    FilterSet for public Product endpoint with limited filtering options.
+    Allows filtering by brand slug, category id/slug, price range.
+    """
+    brand = filters.CharFilter(method='filter_brand_slug', help_text='Filter by brand slug')
+    category = filters.CharFilter(method='filter_category_id_or_slug', help_text='Filter by category ID or slug')
+    min_price = filters.NumberFilter(field_name='price', lookup_expr='gte', help_text='Minimum price filter')
+    max_price = filters.NumberFilter(field_name='price', lookup_expr='lte', help_text='Maximum price filter')
+    
+    class Meta:
+        model = Product
+        fields = []  # We handle all filtering through custom methods
+    
+    def filter_brand_slug(self, queryset, name, value):
+        """Filter products by brand slug."""
+        if value:
+            return queryset.filter(brand__slug=value)
+        return queryset
+    
+    def filter_category_id_or_slug(self, queryset, name, value):
+        """Filter products by category ID or slug."""
+        if value:
+            # Try to filter by ID first (if value is numeric)
+            try:
+                category_id = int(value)
+                return queryset.filter(category_id=category_id)
+            except ValueError:
+                # If not numeric, filter by slug
+                return queryset.filter(category__slug=value)
+        return queryset

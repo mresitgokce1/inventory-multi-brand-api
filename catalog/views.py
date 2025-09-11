@@ -1,11 +1,11 @@
 from rest_framework import viewsets, filters
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from core.constants import ROLE_ADMIN
 from .models import Category, Product
-from .serializers import CategorySerializer, ProductSerializer
+from .serializers import CategorySerializer, ProductSerializer, PublicProductSerializer
 from .permissions import IsAdminOrOwnBrand
-from .filters import CategoryFilter, ProductFilter
+from .filters import CategoryFilter, ProductFilter, PublicProductFilter
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -78,3 +78,26 @@ class ProductViewSet(viewsets.ModelViewSet):
         kwargs = super().get_filterset_kwargs()
         kwargs['request'] = self.request
         return kwargs
+
+
+class PublicProductViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Public read-only ViewSet for Product model.
+    - AllowAny permission (no authentication required)
+    - Only returns active products
+    - Limited serializer with public fields only
+    - Public filtering options: brand slug, category id/slug, price range
+    """
+    serializer_class = PublicProductSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = PublicProductFilter
+    search_fields = ['name', 'sku']
+    ordering_fields = ['price', 'created_at']
+    ordering = ['-created_at']  # Default ordering (most recent first)
+    
+    def get_queryset(self):
+        """
+        Return only active products for public access.
+        """
+        return Product.objects.filter(is_active=True).select_related('brand', 'category')
