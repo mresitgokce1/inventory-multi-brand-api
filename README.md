@@ -336,6 +336,57 @@ curl -X POST http://localhost:8000/api/auth/logout/ \
 curl http://localhost:8000/api/schema/
 ```
 
+## Image Processing Pipeline
+
+### Overview
+Product images are automatically processed when uploaded to optimize storage and improve loading performance:
+
+- **Original Image Processing**: Images are normalized to ensure consistent quality and format
+- **Small Variant Generation**: A smaller thumbnail version is automatically created for listings and previews
+- **Graceful Error Handling**: Image processing failures don't prevent product creation/updates
+
+### Processing Specifications
+
+#### Normalized Original Image
+- **Maximum Width**: 1920 pixels (maintains aspect ratio)
+- **Format**: RGB JPEG at 80% quality
+- **EXIF Data**: Stripped for privacy and smaller file size
+- **Optimization**: Images are optimized for web delivery
+
+#### Small Variant Image (Thumbnail)
+- **Width**: 400 pixels (maintains aspect ratio)
+- **Format**: RGB JPEG at 80% quality  
+- **EXIF Data**: Stripped for privacy and smaller file size
+- **Use Case**: Product listings, previews, and mobile views
+
+### File Size Assumptions
+- **Large products images** (original): Typically 50KB - 500KB after processing
+- **Small variant images**: Typically 5KB - 50KB after processing
+- **Supported input formats**: JPEG, PNG, WebP, and other PIL-supported formats
+- **Output format**: Always JPEG for consistency and optimal compression
+
+### Automatic Processing
+Images are processed automatically via Django signals when:
+- A new product is created with an image
+- An existing product's image is updated
+- A product has an image but missing small variant
+
+Processing happens asynchronously after the product is saved, ensuring:
+- No delays in API responses
+- Graceful fallback if processing fails
+- Comprehensive error logging for troubleshooting
+
+### Storage Structure
+```
+media/
+├── products/              # Original uploaded images
+│   ├── image1.jpg
+│   └── image2_processed.jpg
+└── products/small/        # Auto-generated small variants
+    ├── image1_small.jpg
+    └── image2_processed_small.jpg
+```
+
 ## Models
 
 ### Brand
@@ -465,5 +516,5 @@ The catalog functionality is being implemented in phases:
 - **Phase 2: CRUD serializers & viewsets** - Brand scoping permissions and API endpoints (✓ Complete)
 - **Phase 3: Filtering, search, ordering** - Advanced query capabilities (✓ Complete)
 - **Phase 4: Public read-only products endpoint** - Public API for product browsing (✓ Complete)
-- **Phase 5: Image processing + small variant** - Automatic image resizing and optimization
+- **Phase 5: Image processing + small variant** - Automatic image resizing and optimization (✓ Complete)
 - **Phase 6: Tests + OpenAPI + doc polish** - Comprehensive testing, API documentation, and final polish

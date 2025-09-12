@@ -235,5 +235,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'catalog': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
