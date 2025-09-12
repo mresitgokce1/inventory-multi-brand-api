@@ -309,6 +309,109 @@ curl "http://localhost:8000/api/public/products/?brand=techcorp&min_price=500&or
 curl "http://localhost:8000/api/public/products/?category=laptops&search=gaming&max_price=2000"
 ```
 
+## Complete API Usage Examples
+
+### Authentication & Initial Setup
+
+```bash
+# 1. Login and save session
+curl -X POST http://localhost:8000/api/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "password": "admin123"}' \
+  -c cookies.txt
+
+# Extract access token for authenticated requests
+ACCESS_TOKEN=$(curl -X POST http://localhost:8000/api/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "password": "admin123"}' \
+  -s | jq -r '.access')
+```
+
+### Category Management
+
+```bash
+# 2. Create categories
+curl -X POST http://localhost:8000/api/categories/ \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"brand": 1, "name": "Gaming Laptops", "is_active": true}'
+
+curl -X POST http://localhost:8000/api/categories/ \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"brand": 1, "name": "Business Laptops", "is_active": true}'
+
+# 3. List categories with filtering
+curl -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "http://localhost:8000/api/categories/?is_active=true&ordering=name"
+```
+
+### Product Management with Images
+
+```bash
+# 4. Create product with image
+curl -X POST http://localhost:8000/api/products/ \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -F 'brand=1' \
+  -F 'category=1' \
+  -F 'name=ROG Gaming Laptop' \
+  -F 'sku=ROG-2024-001' \
+  -F 'price=1899.99' \
+  -F 'stock=15' \
+  -F 'description=High-performance gaming laptop with RTX 4070' \
+  -F 'image=@laptop_image.jpg' \
+  -F 'is_active=true'
+
+# 5. List products with advanced filtering
+curl -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "http://localhost:8000/api/products/?category=1&min_price=1000&max_price=2500&search=gaming&ordering=-price"
+
+# 6. Update product price
+curl -X PATCH http://localhost:8000/api/products/1/ \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"price": "1799.99"}'
+```
+
+### Public API Usage (No Authentication)
+
+```bash
+# 7. Browse public products
+curl "http://localhost:8000/api/public/products/?brand=techcorp&min_price=500&ordering=-created_at"
+
+# 8. Search public products
+curl "http://localhost:8000/api/public/products/?search=gaming&category=laptops"
+
+# 9. Get specific public product
+curl http://localhost:8000/api/public/products/1/
+```
+
+### Advanced Filtering Examples
+
+```bash
+# 10. Multi-brand admin filtering (admin only)
+curl -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "http://localhost:8000/api/products/?brand=1&is_active=true&min_price=1000"
+
+# 11. Category-specific search
+curl -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "http://localhost:8000/api/products/?category=1&search=ROG&ordering=name"
+
+# 12. Stock and price range filtering
+curl -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "http://localhost:8000/api/products/?min_price=500&max_price=2000&ordering=stock"
+```
+
+### Session Management
+
+```bash
+# 13. Refresh token when access expires
+curl -X POST http://localhost:8000/api/auth/refresh/ -b cookies.txt
+
+# 14. Logout and clear session
+curl -X POST http://localhost:8000/api/auth/logout/ -b cookies.txt
+```
+
 ## cURL Examples
 
 ### Login
@@ -510,11 +613,113 @@ For production deployment, ensure:
 
 ## Catalog Module Rollout
 
-The catalog functionality is being implemented in phases:
+The catalog functionality has been implemented in phases:
 
 - **Phase 1: Models foundation** - Core Category and Product models with brand-scoped uniqueness (✓ Complete)
 - **Phase 2: CRUD serializers & viewsets** - Brand scoping permissions and API endpoints (✓ Complete)
 - **Phase 3: Filtering, search, ordering** - Advanced query capabilities (✓ Complete)
 - **Phase 4: Public read-only products endpoint** - Public API for product browsing (✓ Complete)
 - **Phase 5: Image processing + small variant** - Automatic image resizing and optimization (✓ Complete)
-- **Phase 6: Tests + OpenAPI + doc polish** - Comprehensive testing, API documentation, and final polish
+- **Phase 6: Tests + OpenAPI + doc polish** - Comprehensive testing, API documentation, and final polish (✓ Complete)
+
+🎉 **Catalog Module Rollout Complete!** The multi-brand inventory system is now fully functional with comprehensive test coverage, complete API documentation, and production-ready features.
+
+## Testing
+
+Run the comprehensive test suite:
+
+```bash
+# Run all tests
+export DJANGO_SETTINGS_MODULE=core_project.settings.dev
+pytest
+
+# Run specific test modules
+pytest accounts/tests/
+pytest catalog/tests/
+
+# Run with coverage
+pytest --cov=catalog --cov=accounts
+
+# Run specific test categories
+pytest catalog/tests/test_models.py          # Model constraints and slug collision
+pytest catalog/tests/test_permissions.py    # Brand scoping permissions
+pytest catalog/tests/test_filtering.py      # Filtering, search, ordering
+pytest catalog/tests/test_public_endpoints.py  # Public API behavior
+pytest catalog/tests/test_image_processing.py  # Image processing and signals
+
+# Run with verbose output
+pytest -v
+```
+
+### Test Coverage
+
+The test suite includes 105+ tests covering:
+
+#### Authentication & User Management (18 tests)
+- User authentication flow (login, refresh, logout)
+- Brand slug auto-generation and uniqueness
+- User model functionality and permissions
+- Permission smoke tests for role-based access
+
+#### Catalog Models (19 tests)
+- Brand-scoped unique constraints for categories and products
+- Slug collision handling with auto-increment
+- Model validation and field constraints
+- Cross-brand uniqueness verification
+
+#### Brand Scoping Permissions (25 tests)
+- Admin vs brand manager access patterns
+- Cross-brand access restrictions
+- CRUD operation permissions by role
+- Orphaned brand manager edge cases
+
+#### Filtering, Search & Ordering (23 tests)
+- Category and product filtering by various fields
+- Search functionality across name and SKU fields
+- Ordering by multiple fields (name, price, date, stock)
+- Combined filter operations
+
+#### Public API Endpoints (19 tests)
+- Unauthenticated access to public products
+- Active-only product filtering
+- Limited field exposure for security
+- Public filtering and search capabilities
+
+#### Image Processing (19 tests)
+- Automatic image resizing and optimization
+- Small variant generation (400px width)
+- EXIF data stripping for privacy
+- Error handling and graceful failures
+- Signal-based processing pipeline
+
+## Future Enhancements
+
+While the core catalog functionality is complete, here are planned enhancements for future development:
+
+### Performance & Scalability
+- **Redis Caching**: Implement Redis-based caching for frequently accessed product catalogs, category trees, and public product listings
+- **Database Query Optimization**: Add select_related/prefetch_related optimizations for complex queries, database indexing strategies
+- **CDN Integration**: Integrate with AWS CloudFront or similar CDN for static asset delivery and image optimization
+
+### Asynchronous Processing
+- **Async Image Tasks**: Move image processing to Celery background tasks for better API response times
+- **Bulk Operations**: Add async endpoints for bulk product imports, batch price updates, and inventory synchronization
+- **Event-Driven Architecture**: Implement Django signals with async task queues for inventory updates and notifications
+
+### Advanced Features
+- **Product Variants**: Support for product variants (size, color, etc.) with variant-specific pricing and inventory
+- **Inventory Tracking**: Real-time inventory tracking with low-stock alerts and automatic reorder points
+- **Analytics & Reporting**: Dashboard with sales analytics, inventory reports, and performance metrics
+- **API Rate Limiting**: Implement rate limiting for public endpoints to prevent abuse
+- **Search Enhancement**: Full-text search with Elasticsearch for advanced product discovery
+
+### Integration & Automation
+- **Webhook Support**: Outbound webhooks for inventory changes, new product notifications
+- **Third-party Integrations**: Shopify, WooCommerce, and other e-commerce platform connectors
+- **Automated Testing**: Expand test coverage with integration tests, load testing, and automated security scanning
+- **Documentation**: Interactive API documentation with Swagger UI and comprehensive developer guides
+
+### Security & Compliance
+- **Audit Logging**: Comprehensive audit trails for all product and inventory changes
+- **Data Export**: GDPR-compliant data export functionality
+- **Enhanced Permissions**: Fine-grained permissions for specific product categories and price ranges

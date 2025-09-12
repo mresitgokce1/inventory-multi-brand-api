@@ -1,6 +1,7 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from core.constants import ROLE_ADMIN
 from .models import Category, Product
 from .serializers import CategorySerializer, ProductSerializer, PublicProductSerializer
@@ -8,6 +9,38 @@ from .permissions import IsAdminOrOwnBrand
 from .filters import CategoryFilter, ProductFilter, PublicProductFilter
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List categories",
+        description="List categories accessible to the authenticated user. Admin users see all categories across all brands, while brand managers see only their own brand's categories.",
+        tags=["categories"]
+    ),
+    create=extend_schema(
+        summary="Create a new category",
+        description="Create a new category. Admin users can specify any brand, while brand managers automatically create categories for their own brand.",
+        tags=["categories"]
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve a category",
+        description="Retrieve a specific category by ID (if user has access to it).",
+        tags=["categories"]
+    ),
+    update=extend_schema(
+        summary="Update a category",
+        description="Update a specific category by ID (if user has access to it).",
+        tags=["categories"]
+    ),
+    partial_update=extend_schema(
+        summary="Partially update a category",
+        description="Partially update a specific category by ID (if user has access to it).",
+        tags=["categories"]
+    ),
+    destroy=extend_schema(
+        summary="Delete a category",
+        description="Delete a specific category by ID (if user has access to it).",
+        tags=["categories"]
+    ),
+)
 class CategoryViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Category model with brand-based queryset filtering.
@@ -40,6 +73,38 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 return Category.objects.none()
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List products",
+        description="List products accessible to the authenticated user. Admin users see all products across all brands, while brand managers see only their own brand's products. Supports filtering by category, active status, price range, and brand (admin only). Includes search by name and SKU, and ordering by various fields.",
+        tags=["products"]
+    ),
+    create=extend_schema(
+        summary="Create a new product",
+        description="Create a new product. Admin users can specify any brand, while brand managers automatically create products for their own brand. Price and stock must be non-negative. Category must belong to the same brand as the product.",
+        tags=["products"]
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve a product",
+        description="Retrieve a specific product by ID (if user has access to it).",
+        tags=["products"]
+    ),
+    update=extend_schema(
+        summary="Update a product",
+        description="Update a specific product by ID (if user has access to it). Image processing is triggered automatically when images are updated.",
+        tags=["products"]
+    ),
+    partial_update=extend_schema(
+        summary="Partially update a product",
+        description="Partially update a specific product by ID (if user has access to it). Image processing is triggered automatically when images are updated.",
+        tags=["products"]
+    ),
+    destroy=extend_schema(
+        summary="Delete a product",
+        description="Delete a specific product by ID (if user has access to it).",
+        tags=["products"]
+    ),
+)
 class ProductViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Product model with brand-based queryset filtering.
@@ -80,6 +145,18 @@ class ProductViewSet(viewsets.ModelViewSet):
         return kwargs
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="Browse public products",
+        description="Browse active products without authentication. Public read-only access to product catalog with limited fields. Only returns active products. Supports filtering by brand slug, category ID/slug, and price range. Includes search by name and SKU, and ordering by price or creation date.",
+        tags=["public-products"]
+    ),
+    retrieve=extend_schema(
+        summary="Get public product details",
+        description="Retrieve details of a specific active product without authentication. Returns limited public fields only.",
+        tags=["public-products"]
+    ),
+)
 class PublicProductViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Public read-only ViewSet for Product model.
