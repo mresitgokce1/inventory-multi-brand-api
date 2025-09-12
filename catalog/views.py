@@ -199,7 +199,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             format_type = 'png'
         
         # PNG format
-        qr = qrcode.QRCode(version=1, box_size=size//25, border=4)
+        qr = qrcode.QRCode(version=1, box_size=max(1, size//25), border=4)
         qr.add_data(frontend_url)
         qr.make(fit=True)
         
