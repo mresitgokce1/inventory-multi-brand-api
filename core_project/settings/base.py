@@ -123,6 +123,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Admin URL
 ADMIN_URL = config('ADMIN_URL', default='hidden-admin-portal/')
 
+# Frontend base URL for QR code resolution
+FRONTEND_BASE_URL = config('FRONTEND_BASE_URL', default='https://app.example.com')
+
 # CORS settings
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='', cast=lambda x: [s.strip() for s in x.split(',') if s.strip()])
 CORS_ALLOW_CREDENTIALS = True
