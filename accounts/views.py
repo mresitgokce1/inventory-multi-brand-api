@@ -6,6 +6,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.openapi import OpenApiResponse
 from .models import User
 
 
@@ -24,6 +26,40 @@ def set_refresh_cookie(response, refresh_token):
     )
 
 
+@extend_schema(
+    summary="User login",
+    description="Authenticate with email and password. Returns access token in response body and sets HttpOnly refresh token cookie for secure token rotation.",
+    tags=["authentication"],
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'email': {'type': 'string', 'format': 'email', 'example': 'user@example.com'},
+                'password': {'type': 'string', 'example': 'password123'}
+            },
+            'required': ['email', 'password']
+        }
+    },
+    responses={
+        200: OpenApiResponse(
+            description="Login successful",
+            examples=[OpenApiExample(
+                "Successful login",
+                value={
+                    "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                    "user": {
+                        "id": 1,
+                        "email": "user@example.com",
+                        "role": "BRAND_MANAGER",
+                        "brand_id": 1
+                    }
+                }
+            )]
+        ),
+        400: "Missing email or password",
+        401: "Invalid credentials or inactive account"
+    }
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
@@ -69,6 +105,24 @@ def login_view(request):
     return response
 
 
+@extend_schema(
+    summary="Refresh access token",
+    description="Refresh access token using HttpOnly refresh token cookie. Returns new access token and rotates refresh token if configured.",
+    tags=["authentication"],
+    request=None,
+    responses={
+        200: OpenApiResponse(
+            description="Token refreshed successfully",
+            examples=[OpenApiExample(
+                "Successful refresh",
+                value={
+                    "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                }
+            )]
+        ),
+        401: "Missing or invalid refresh token"
+    }
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def refresh_view(request):
@@ -107,6 +161,23 @@ def refresh_view(request):
         )
 
 
+@extend_schema(
+    summary="User logout",
+    description="Logout user by clearing the HttpOnly refresh token cookie. No authentication required.",
+    tags=["authentication"],
+    request=None,
+    responses={
+        200: OpenApiResponse(
+            description="Logout successful",
+            examples=[OpenApiExample(
+                "Successful logout",
+                value={
+                    "detail": "Çıkış yapıldı."
+                }
+            )]
+        )
+    }
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def logout_view(request):
