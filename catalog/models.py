@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from slugify import slugify
 from accounts.models import Brand
+from .utils import generate_unique_qr_code
 
 
 class Category(models.Model):
@@ -114,4 +115,40 @@ class Product(models.Model):
             
             self.slug = slug
         
+        super().save(*args, **kwargs)
+
+
+class ProductQRCode(models.Model):
+    """
+    QR Code model for products with brand-scoped visibility.
+    """
+    product = models.OneToOneField(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='qr_code'
+    )
+    code = models.CharField(
+        max_length=10,
+        unique=True,
+        help_text="Base62 encoded QR code (8-10 characters)"
+    )
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    regenerated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Product QR Code"
+        verbose_name_plural = "Product QR Codes"
+
+    def __str__(self):
+        return f"QR Code {self.code} for {self.product.name}"
+
+    def save(self, *args, **kwargs):
+        """
+        Auto-generate unique code if not provided.
+        """
+        if not self.code:
+            self.code = generate_unique_qr_code()
         super().save(*args, **kwargs)

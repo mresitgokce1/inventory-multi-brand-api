@@ -6,6 +6,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView
+from catalog.views import QRResolveView
 
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
@@ -13,6 +14,7 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/', include('catalog.urls')),
     path('api/public/', include('catalog.public_urls')),
+    path('api/qr/resolve/<str:code>/', QRResolveView.as_view(), name='qr-resolve'),
 ]
 
 # Serve media files in development

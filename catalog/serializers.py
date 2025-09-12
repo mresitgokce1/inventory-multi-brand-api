@@ -233,3 +233,31 @@ class PublicProductSerializer(serializers.ModelSerializer):
                 'slug': obj.category.slug
             }
         return None
+
+
+class QRCodeGenerateSerializer(serializers.Serializer):
+    """
+    Serializer for QR code generation request.
+    """
+    format = serializers.ChoiceField(choices=['png', 'svg'], default='png')
+    size = serializers.IntegerField(default=256, min_value=64, max_value=1024)
+    regenerate = serializers.BooleanField(default=False)
+
+
+class QRCodeResponseSerializer(serializers.Serializer):
+    """
+    Serializer for QR code response.
+    """
+    code = serializers.CharField()
+    url = serializers.CharField()
+    image_base64 = serializers.CharField()
+    mime_type = serializers.CharField()
+
+
+class QRResolveResponseSerializer(serializers.Serializer):
+    """
+    Serializer for QR code resolve response.
+    """
+    visibility = serializers.ChoiceField(choices=['public', 'manager', 'admin'])
+    product_public = serializers.DictField()
+    product_private = serializers.DictField(required=False)
