@@ -1,3 +1,3 @@
-from django.test import TestCase
-
-# Create your tests here.
+# Test modules are organized in catalog/tests/ directory
+# Import test modules to ensure they're discovered by pytest
+from .tests import *
