@@ -226,3 +226,5 @@ local_settings.py
 .pytest_cache/
 htmlcov/
 cookies.txt
+
+.vscode/
